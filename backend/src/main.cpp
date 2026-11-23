@@ -35,6 +35,21 @@ int main(int argc, char* argv[]) {
         std::string arg = argv[i];
         if (arg == "--port" && i + 1 < argc) {
             port = std::stoi(argv[++i]);
+        } else if (arg == "--help" || arg == "-h") {
+            std::cout << "Usage:\n"
+                      << "  tracker_server.exe               Start HTTP REST API & Frontend on http://localhost:8080\n"
+                      << "  tracker_server.exe --port <num>  Start server on custom port\n"
+                      << "  tracker_server.exe --test        Run in-process C++ database smoke tests\n"
+                      << "  tracker_server.exe --help        Show command line options\n";
+            return 0;
+        }
+    }
+
+    bool isTestMode = false;
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "--test" || std::string(argv[i]) == "-t") {
+            isTestMode = true;
+            break;
         }
     }
 
@@ -60,6 +75,62 @@ int main(int argc, char* argv[]) {
 
     // 2. Instantiate Repository, Service & Controller
     tracker::repository::ItemRepository repository(dbManager.getRawHandle());
+
+    if (isTestMode) {
+        std::cout << "[Test Mode] Running internal repository smoke test suite...\n";
+        int passed = 0;
+        int total = 0;
+
+        auto check = [&](const std::string& name, bool cond) {
+            total++;
+            if (cond) {
+                passed++;
+                std::cout << "  [PASS] " << name << "\n";
+            } else {
+                std::cout << "  [FAIL] " << name << "\n";
+            }
+        };
+
+        auto all = repository.findAll();
+        check("ItemRepository::findAll() >= 6 items", all.size() >= 6);
+
+        auto exp = repository.findAll("expense", std::nullopt, std::nullopt, std::nullopt);
+        check("Filter type='expense'", !exp.empty());
+
+        auto tasks = repository.findAll("task", std::nullopt, std::nullopt, std::nullopt);
+        check("Filter type='task'", !tasks.empty());
+
+        auto byId = repository.findById(1);
+        check("ItemRepository::findById(1)", byId.has_value() && byId->id == 1);
+
+        tracker::models::Item temp;
+        temp.title = "Temporary Test Item";
+        temp.type = "task";
+        temp.category = "Project";
+        temp.status = "pending";
+        temp.priority = "medium";
+        int newId = repository.create(temp);
+        check("ItemRepository::create()", newId > 0);
+
+        temp.title = "Temporary Test Item - Updated";
+        bool upOk = repository.update(newId, temp);
+        check("ItemRepository::update()", upOk);
+
+        auto stats = repository.getSummaryStats();
+        check("ItemRepository::getSummaryStats()", stats.expenses.total_count > 0 && stats.tasks.total_count > 0);
+
+        bool delOk = repository.remove(newId);
+        check("ItemRepository::remove()", delOk);
+
+        auto gone = repository.findById(newId);
+        check("Confirm Deleted Item is Nullopt", !gone.has_value());
+
+        std::cout << "===================================================================\n"
+                  << "Smoke Tests Passed: " << passed << " / " << total << "\n"
+                  << "===================================================================\n";
+        return (passed == total) ? 0 : 1;
+    }
+
     tracker::services::ItemService service(repository);
     tracker::controllers::ItemController controller(service);
 

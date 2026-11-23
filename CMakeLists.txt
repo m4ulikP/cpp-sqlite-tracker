@@ -44,6 +44,12 @@ endif()
 
 add_executable(tracker_server ${BACKEND_SOURCES})
 
+if(MSVC)
+    target_compile_options(tracker_server PRIVATE /W4)
+else()
+    target_compile_options(tracker_server PRIVATE -Wall -Wextra -Wno-unused-parameter)
+endif()
+
 if(DEFINED SQLITE_TARGET)
     target_link_libraries(tracker_server PRIVATE ${SQLITE_TARGET})
 endif()

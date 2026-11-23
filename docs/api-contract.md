@@ -75,7 +75,44 @@ Error Response Envelope:
 
 ---
 
-## 3. Create Item
+## 3. Get Item by ID
+- **Endpoint:** `GET /api/items/{id}`
+- **Path Parameter:** `id` (integer)
+- **Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "C++ Semester Textbook & Lab Manual",
+    "type": "expense",
+    "category": "Books",
+    "amount": 64.50,
+    "status": "paid",
+    "priority": "high",
+    "due_date": "2026-11-20",
+    "description": "Required textbook for CS201 course",
+    "created_at": "2026-11-23T16:00:00Z",
+    "updated_at": "2026-11-23T16:00:00Z"
+  },
+  "error": null
+}
+```
+- **Error Response (404 Not Found):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Item with ID 9999 was not found."
+  }
+}
+```
+
+---
+
+## 4. Create Item
 - **Endpoint:** `POST /api/items`
 - **Request Headers:** `Content-Type: application/json`
 - **Request Body:**
@@ -92,9 +129,9 @@ Error Response Envelope:
 }
 ```
 - **Validation Rules:**
-  - `title`: String, 1–120 characters, required.
+  - `title`: String, 1–150 characters, non-empty, required.
   - `type`: Must be `"expense"` or `"task"`, required.
-  - `category`: Must be one of `['Tuition', 'Books', 'Food', 'Housing', 'Travel', 'Assignment', 'Exam', 'Project', 'Personal', 'Other']`, required.
+  - `category`: Must be one of `['Tuition', 'Books', 'Food', 'Housing', 'Travel', 'Assignment', 'Exam', 'Project', 'Personal', 'Other']`.
   - `amount`: Number, >= 0.0 (defaults to 0.0).
   - `status`: One of `['pending', 'in_progress', 'completed', 'paid', 'cancelled']` (defaults to `"pending"`).
   - `priority`: One of `['low', 'medium', 'high']` (defaults to `"medium"`).
@@ -125,15 +162,15 @@ Error Response Envelope:
   "success": false,
   "data": null,
   "error": {
-    "code": "VALIDATION_FAILED",
-    "message": "Field 'title' cannot be empty."
+    "code": "INVALID_INPUT",
+    "message": "Field 'title' is required and cannot be empty or whitespace."
   }
 }
 ```
 
 ---
 
-## 4. Update Item
+## 5. Update Item
 - **Endpoint:** `PUT /api/items/{id}`
 - **Path Parameter:** `id` (integer)
 - **Request Body:**
@@ -176,14 +213,14 @@ Error Response Envelope:
   "data": null,
   "error": {
     "code": "NOT_FOUND",
-    "message": "Item with id 7 was not found."
+    "message": "Item with ID 7 was not found."
   }
 }
 ```
 
 ---
 
-## 5. Delete Item
+## 6. Delete Item
 - **Endpoint:** `DELETE /api/items/{id}`
 - **Path Parameter:** `id` (integer)
 - **Success Response (200 OK):**
@@ -204,14 +241,14 @@ Error Response Envelope:
   "data": null,
   "error": {
     "code": "NOT_FOUND",
-    "message": "Item with id 7 was not found."
+    "message": "Item with ID 7 was not found."
   }
 }
 ```
 
 ---
 
-## 6. Summary Stats
+## 7. Summary Stats
 - **Endpoint:** `GET /api/items/summary`
 - **Description:** Returns aggregate metrics for student dashboard widgets (total expense, pending expenses, total tasks, completed tasks, tasks due soon).
 - **Success Response (200 OK):**
@@ -234,5 +271,18 @@ Error Response Envelope:
     }
   },
   "error": null
+}
+```
+
+---
+
+## 8. Administrative Shutdown (Internal / Test Automation)
+- **Endpoint:** `POST /api/admin/shutdown`
+- **Description:** Initiates graceful server shutdown. Intended exclusively for test harnesses and local desktop lifecycle termination. Does not respond to `GET` requests to prevent accidental browser triggers.
+- **Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Server shutting down"
 }
 ```

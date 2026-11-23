@@ -126,3 +126,20 @@ See [docs/api-contract.md](file:///c:/Users/mauli/OneDrive/Documents/cpp project
    - **Unit / Database Smoke Tests:** `.\build\bin\tracker_server.exe --test`
    - **Live REST API Tests:** `powershell -File .\scripts\test_api.ps1`
    - **Full End-to-End Tests:** `powershell -File .\scripts\verify_e2e.ps1`
+
+---
+
+## Technical Highlights for College Presentation / Viva
+
+- **Modern C++20 Standard:** Utilizes `<filesystem>`, structured bindings, `std::optional`, and designated initializers.
+- **Strict RAII (Resource Acquisition Is Initialization):**
+  - `DatabaseManager`: Ensures `sqlite3_close_v2` is guaranteed on destruction. Copying is deleted; move semantics transfer ownership.
+  - `ScopedStatement`: RAII wrapper around `sqlite3_stmt*` to guarantee `sqlite3_finalize` is always invoked, eliminating statement/memory leaks.
+- **SQL Injection Prevention:**
+  - Zero SQL string concatenation. All dynamic filtering in `findAll` uses positional parameter placeholders (`?`) and `sqlite3_bind_*`.
+- **Domain Validation & Result Pattern:**
+  - `ItemService` validates inputs before any database query is executed, returning strongly-typed `ServiceResult<T>` with distinct error codes (`INVALID_INPUT`, `NOT_FOUND`, `DB_ERROR`).
+- **REST Envelopes & CORS:**
+  - Clean JSON envelope `{ "success": true/false, "data": ..., "error": ... }` matching production standards. Full preflight `OPTIONS` and CORS headers support.
+- **Dual Serving:**
+  - C++ `cpp-httplib` server directly mounts `./frontend`, serving the single-page application and the REST API simultaneously on port 8080.
