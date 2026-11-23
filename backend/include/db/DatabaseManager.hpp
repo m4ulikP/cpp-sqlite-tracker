@@ -12,6 +12,14 @@ public:
     explicit DatabaseManager(std::string dbPath = "data/tracker.db");
     ~DatabaseManager();
 
+    // Prevent copying to avoid double close
+    DatabaseManager(const DatabaseManager&) = delete;
+    DatabaseManager& operator=(const DatabaseManager&) = delete;
+
+    // Allow moving
+    DatabaseManager(DatabaseManager&& other) noexcept;
+    DatabaseManager& operator=(DatabaseManager&& other) noexcept;
+
     bool initialize();
     bool executeSchema(const std::string& schemaSqlPath = "data/schema.sql");
     sqlite3* getRawHandle() const;

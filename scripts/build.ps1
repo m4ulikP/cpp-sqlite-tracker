@@ -37,21 +37,36 @@ $linkFlags = @(
 $sources = @(
     "backend/src/main.cpp",
     "backend/src/db/DatabaseManager.cpp",
-    "backend/src/repository/ItemRepository.cpp",
-    "backend/src/services/ItemService.cpp",
-    "backend/src/controllers/ItemController.cpp"
+    "backend/src/repository/ItemRepository.cpp"
 )
 
+if (Test-Path "backend/src/services/ItemService.cpp") {
+    $sources += "backend/src/services/ItemService.cpp"
+}
+if (Test-Path "backend/src/controllers/ItemController.cpp") {
+    $sources += "backend/src/controllers/ItemController.cpp"
+}
+
+$sqliteObj = "build/sqlite3.o"
 if (Test-Path "backend/third_party/sqlite3.c") {
-    $sources += "backend/third_party/sqlite3.c"
+    $sqliteSrc = "backend/third_party/sqlite3.c"
+    if (!(Test-Path $sqliteObj) -or ((Get-Item $sqliteSrc).LastWriteTime -gt (Get-Item $sqliteObj).LastWriteTime)) {
+        Write-Host "==> Compiling SQLite3 C amalgamation to $sqliteObj..." -ForegroundColor Cyan
+        $cCompiler = if (Test-Path "C:\msys64\ucrt64\bin\gcc.exe") { "C:\msys64\ucrt64\bin\gcc.exe" } else { $CompilerPath }
+        & $cCompiler -O2 -c $sqliteSrc -o $sqliteObj
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to compile sqlite3.c"
+        }
+    }
+    $sources += $sqliteObj
 } else {
     $linkFlags += "-lsqlite3"
 }
 
 $outputExe = "$buildBinDir/tracker_server.exe"
 
-Write-Host "==> Compiling tracker_server.exe with C++20..." -ForegroundColor Cyan
-& $CompilerPath -std=c++20 -O2 $includeFlags $sources $linkFlags -o $outputExe
+Write-Host "==> Compiling tracker_server.exe with C++20 (Warnings enabled)..." -ForegroundColor Cyan
+& $CompilerPath -std=c++20 -O2 -Wall -Wextra -Wno-unused-parameter $includeFlags $sources $linkFlags -o $outputExe
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "==> Build successful: $outputExe" -ForegroundColor Green

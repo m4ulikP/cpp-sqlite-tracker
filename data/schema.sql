@@ -36,12 +36,12 @@ BEGIN
     WHERE id = OLD.id;
 END;
 
--- 4. Initial seed data for college demo verification
-INSERT INTO items (title, type, category, amount, status, priority, due_date, description)
+-- 4. Initial seed data for college demo verification (safe for re-execution)
+INSERT OR IGNORE INTO items (id, title, type, category, amount, status, priority, due_date, description)
 VALUES 
-    ('C++ Semester Textbook & Lab Manual', 'expense', 'Books', 64.50, 'paid', 'high', '2026-11-20', 'Required textbook for CS201 course'),
-    ('Campus Cafeteria Monthly Meal Card', 'expense', 'Food', 120.00, 'paid', 'medium', '2026-11-25', 'Meal credits reload'),
-    ('Submit C++ Project Architecture Proposal', 'task', 'Project', 0.0, 'completed', 'high', '2026-11-23', 'Document 3-layer architecture, schema and API specs'),
-    ('Implement SQLite Parameterized Repository', 'task', 'Project', 0.0, 'in_progress', 'high', '2026-11-28', 'Write C++20 database access layer preventing SQL injection'),
-    ('Final Exam Preparation: Data Structures', 'task', 'Exam', 0.0, 'pending', 'high', '2026-12-05', 'Chapters 4 to 8 review and practice questions'),
-    ('Dormitory Internet Subscription Share', 'expense', 'Housing', 25.00, 'pending', 'medium', '2026-11-30', 'Monthly high-speed fiber share');
+    (1, 'C++ Semester Textbook & Lab Manual', 'expense', 'Books', 64.50, 'paid', 'high', '2026-11-20', 'Required textbook for CS201 course'),
+    (2, 'Campus Cafeteria Monthly Meal Card', 'expense', 'Food', 120.00, 'paid', 'medium', '2026-11-25', 'Meal credits reload'),
+    (3, 'Submit C++ Project Architecture Proposal', 'task', 'Project', 0.0, 'completed', 'high', '2026-11-23', 'Document 3-layer architecture, schema and API specs'),
+    (4, 'Implement SQLite Parameterized Repository', 'task', 'Project', 0.0, 'in_progress', 'high', '2026-11-28', 'Write C++20 database access layer preventing SQL injection'),
+    (5, 'Final Exam Preparation: Data Structures', 'task', 'Exam', 0.0, 'pending', 'high', '2026-12-05', 'Chapters 4 to 8 review and practice questions'),
+    (6, 'Dormitory Internet Subscription Share', 'expense', 'Housing', 25.00, 'pending', 'medium', '2026-11-30', 'Monthly high-speed fiber share');

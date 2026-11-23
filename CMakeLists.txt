@@ -18,9 +18,15 @@ set(BACKEND_SOURCES
     backend/src/main.cpp
     backend/src/db/DatabaseManager.cpp
     backend/src/repository/ItemRepository.cpp
-    backend/src/services/ItemService.cpp
-    backend/src/controllers/ItemController.cpp
 )
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/backend/src/services/ItemService.cpp")
+    list(APPEND BACKEND_SOURCES backend/src/services/ItemService.cpp)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/backend/src/controllers/ItemController.cpp")
+    list(APPEND BACKEND_SOURCES backend/src/controllers/ItemController.cpp)
+endif()
 
 if(TARGET SQLite::SQLite3)
     message(STATUS "Found system SQLite3")
