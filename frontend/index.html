@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Expense & Task Tracker | C++20 + SQLite3</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation Header -->
+    <header class="navbar">
+      <div class="nav-container">
+        <div class="brand">
+          <div class="brand-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+              <path d="M6 6h10"></path>
+              <path d="M6 10h10"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="brand-title">Student Tracker</h1>
+            <p class="brand-subtitle">Modern C++20 &bull; SQLite3 &bull; REST API</p>
+          </div>
+        </div>
+
+        <div class="nav-actions">
+          <div id="connectionStatus" class="status-pill checking">
+            <span class="status-dot"></span>
+            <span class="status-text">Checking backend...</span>
+          </div>
+          <button id="btnOpenCreateModal" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>New Item</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Error Banner (Hidden by default) -->
+      <div id="errorBanner" class="alert-banner hidden">
+        <div class="alert-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="alert-content">
+          <h4 id="errorBannerTitle">Connection Error</h4>
+          <p id="errorBannerMessage">Unable to connect to the C++ backend on http://localhost:8080.</p>
+        </div>
+        <button id="btnRetryConnection" class="btn btn-sm btn-outline">Retry</button>
+      </div>
+
+      <!-- Dashboard Summary Metrics Strip -->
+      <section class="summary-section">
+        <div class="summary-grid">
+          <!-- Total Expenses Card -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-label">Total Expenses</span>
+              <span class="metric-icon expense-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="1" x2="12" y2="23"></line>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-value" id="summaryTotalExpense">$0.00</div>
+            <div class="metric-footer" id="summaryExpenseCount">0 recorded expenses</div>
+          </div>
+
+          <!-- Paid vs Pending Breakdown -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-label">Payment Breakdown</span>
+              <span class="metric-icon split-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                  <line x1="2" y1="10" x2="22" y2="10"></line>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-split">
+              <div>
+                <span class="split-sublabel">Paid:</span>
+                <span class="split-subval text-success" id="summaryPaidAmount">$0.00</span>
+              </div>
+              <div>
+                <span class="split-sublabel">Pending:</span>
+                <span class="split-subval text-warning" id="summaryPendingAmount">$0.00</span>
+              </div>
+            </div>
+            <div class="metric-bar-track">
+              <div id="expenseProgressBar" class="metric-bar-fill fill-paid" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Task Completion Rate -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-label">Task Completion</span>
+              <span class="metric-icon task-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-value" id="summaryTaskPercentage">0%</div>
+            <div class="metric-bar-track">
+              <div id="taskProgressBar" class="metric-bar-fill fill-task" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Active Task Breakdown -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-label">Task Status</span>
+              <span class="metric-icon list-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-split">
+              <div>
+                <span class="split-sublabel">Done:</span>
+                <span class="split-subval text-success" id="summaryTasksDone">0</span>
+              </div>
+              <div>
+                <span class="split-sublabel">In Progress:</span>
+                <span class="split-subval text-info" id="summaryTasksProgress">0</span>
+              </div>
+              <div>
+                <span class="split-sublabel">Pending:</span>
+                <span class="split-subval text-warning" id="summaryTasksPending">0</span>
+              </div>
+            </div>
+            <div class="metric-footer" id="summaryTotalTasks">0 total tasks</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Filters & Search Toolbar -->
+      <section class="toolbar-section">
+        <div class="search-box">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search by title or description..." autocomplete="off">
+          <button id="btnClearSearch" class="btn-clear hidden" title="Clear search">&times;</button>
+        </div>
+
+        <div class="filter-controls">
+          <!-- Type Filter Tabs -->
+          <div class="segmented-control" id="typeFilterControl">
+            <button class="seg-btn active" data-type="">All</button>
+            <button class="seg-btn" data-type="expense">Expenses</button>
+            <button class="seg-btn" data-type="task">Tasks</button>
+          </div>
+
+          <!-- Category Filter -->
+          <div class="select-wrapper">
+            <select id="categoryFilter" aria-label="Filter by Category">
+              <option value="">All Categories</option>
+              <option value="Tuition">Tuition</option>
+              <option value="Books">Books</option>
+              <option value="Food">Food</option>
+              <option value="Housing">Housing</option>
+              <option value="Travel">Travel</option>
+              <option value="Assignment">Assignment</option>
+              <option value="Exam">Exam</option>
+              <option value="Project">Project</option>
+              <option value="Personal">Personal</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="select-wrapper">
+            <select id="statusFilter" aria-label="Filter by Status">
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="paid">Paid</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+
+          <button id="btnResetFilters" class="btn btn-ghost" title="Reset all filters">Reset</button>
+        </div>
+      </section>
+
+      <!-- Records Section Header -->
+      <div class="records-header">
+        <div class="records-count">
+          <span id="itemsCountLabel">Showing records...</span>
+        </div>
+        <button id="btnRefresh" class="btn-refresh" title="Refresh data">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      <!-- Items Table Container -->
+      <div class="table-container">
+        <!-- Loading State Skeleton -->
+        <div id="loadingState" class="skeleton-container">
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+        </div>
+
+        <!-- Empty State View -->
+        <div id="emptyState" class="empty-state hidden">
+          <div class="empty-state-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+          </div>
+          <h3>No Items Found</h3>
+          <p id="emptyStateSubtitle">There are no records matching your current filter criteria.</p>
+          <button id="btnEmptyStateAction" class="btn btn-primary">+ Create New Item</button>
+        </div>
+
+        <!-- Main Items Table -->
+        <table id="itemsTable" class="data-table hidden">
+          <thead>
+            <tr>
+              <th style="width: 32px;"></th>
+              <th>Title & Description</th>
+              <th>Type</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Due Date</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="itemsTableBody">
+            <!-- Dynamically populated rows -->
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <p>Student Expense & Task Tracker &bull; C++20 REST API powered by <code>cpp-httplib</code> & <code>SQLite3</code></p>
+        <p class="api-link">API Target: <a href="http://localhost:8080/api/health" target="_blank" rel="noopener">http://localhost:8080/api/health</a></p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Create / Edit Item Modal -->
+  <div id="itemModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add New Item</h3>
+        <button id="btnCloseModal" class="btn-close" aria-label="Close modal">&times;</button>
+      </div>
+
+      <form id="itemForm" class="modal-body" novalidate>
+        <input type="hidden" id="formItemId" value="">
+
+        <!-- Modal Form Error Alert -->
+        <div id="modalFormError" class="modal-alert hidden"></div>
+
+        <!-- Item Type Toggle -->
+        <div class="form-group">
+          <label class="form-label">Item Type *</label>
+          <div class="type-selector">
+            <label class="type-radio-card">
+              <input type="radio" name="itemType" value="expense" checked>
+              <span class="type-radio-content">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="1" x2="12" y2="23"></line>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <span>Expense</span>
+              </span>
+            </label>
+            <label class="type-radio-card">
+              <input type="radio" name="itemType" value="task">
+              <span class="type-radio-content">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span>Academic Task</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group">
+          <label for="formTitle" class="form-label">Title *</label>
+          <input type="text" id="formTitle" class="form-input" placeholder="e.g., Operating Systems Assignment 2" required maxlength="150">
+        </div>
+
+        <!-- Two Columns: Category & Amount -->
+        <div class="form-row">
+          <div class="form-group col-half">
+            <label for="formCategory" class="form-label">Category *</label>
+            <select id="formCategory" class="form-select" required>
+              <option value="Assignment">Assignment</option>
+              <option value="Exam">Exam</option>
+              <option value="Project">Project</option>
+              <option value="Books">Books</option>
+              <option value="Tuition">Tuition</option>
+              <option value="Food">Food</option>
+              <option value="Housing">Housing</option>
+              <option value="Travel">Travel</option>
+              <option value="Personal">Personal</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group col-half">
+            <label for="formAmount" class="form-label" id="labelFormAmount">Amount ($)</label>
+            <input type="number" id="formAmount" class="form-input" placeholder="0.00" min="0" step="0.01" value="0.00">
+          </div>
+        </div>
+
+        <!-- Two Columns: Status & Priority -->
+        <div class="form-row">
+          <div class="form-group col-half">
+            <label for="formStatus" class="form-label">Status *</label>
+            <select id="formStatus" class="form-select" required>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="paid">Paid</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+
+          <div class="form-group col-half">
+            <label for="formPriority" class="form-label">Priority *</label>
+            <select id="formPriority" class="form-select" required>
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Due Date -->
+        <div class="form-group">
+          <label for="formDueDate" class="form-label">Due Date (Optional)</label>
+          <input type="date" id="formDueDate" class="form-input">
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="formDescription" class="form-label">Description (Optional)</label>
+          <textarea id="formDescription" class="form-textarea" rows="2" placeholder="Notes, instructions or course details..." maxlength="1000"></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btnCancelModal" class="btn btn-ghost">Cancel</button>
+          <button type="submit" id="btnSubmitForm" class="btn btn-primary">
+            <span class="btn-spinner hidden"></span>
+            <span id="btnSubmitText">Save Item</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+    <div class="modal-card modal-confirm">
+      <div class="modal-header">
+        <h3 id="deleteModalTitle" class="text-danger">Delete Item</h3>
+        <button id="btnCloseDeleteModal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete <strong id="deleteItemTitle"></strong>?</p>
+        <p class="text-muted text-sm" style="margin-top: 6px;">This action will permanently delete this record from the SQLite database.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnCancelDelete" class="btn btn-ghost">Cancel</button>
+        <button type="button" id="btnConfirmDelete" class="btn btn-danger">Delete Permanently</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

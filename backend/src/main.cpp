@@ -3,6 +3,7 @@
 #include <csignal>
 #include <memory>
 #include <cstdlib>
+#include <filesystem>
 
 #include "httplib.h"
 #include "db/DatabaseManager.hpp"
@@ -72,6 +73,11 @@ int main(int argc, char* argv[]) {
 
     // Register API Routes
     controller.registerRoutes(server);
+
+    // Mount static frontend directory if present
+    if (std::filesystem::exists("frontend")) {
+        server.set_mount_point("/", "./frontend");
+    }
 
     // Graceful Shutdown Route for testing & automated harnesses (localhost only)
     server.Post("/api/admin/shutdown", [&server](const httplib::Request&, httplib::Response& res) {

@@ -85,7 +85,7 @@ See [docs/api-contract.md](file:///c:/Users/mauli/OneDrive/Documents/cpp project
 
 ---
 
-## Getting Started (Phase 1)
+## Running the Project End-to-End
 
 1. **Clone repository:**
    ```bash
@@ -98,13 +98,31 @@ See [docs/api-contract.md](file:///c:/Users/mauli/OneDrive/Documents/cpp project
    .\scripts\setup_dependencies.ps1
    ```
 
-3. **Compile Backend:**
-   - **Using CMake:**
+3. **Compile Backend (C++20):**
+   - **Using Turnkey PowerShell Script:**
+     ```powershell
+     .\scripts\build.ps1
+     ```
+   - **Or using CMake:**
      ```bash
      cmake -B build -S .
      cmake --build build --config Release
      ```
-   - **Using PowerShell with UCRT64 GCC:**
+
+4. **Launch Server:**
+   ```powershell
+   .\build\bin\tracker_server.exe
+   ```
+
+5. **Open Frontend in Browser:**
+   - **Direct via C++ Backend:** Open [http://localhost:8080](http://localhost:8080)
+   - **Or serve via Python:**
      ```powershell
-     .\scripts\build.ps1
+     python -m http.server 3000 --directory frontend
      ```
+     Then open [http://localhost:3000](http://localhost:3000) (CORS enabled).
+
+6. **Run Automated Test Suites:**
+   - **Unit / Database Smoke Tests:** `.\build\bin\tracker_server.exe --test`
+   - **Live REST API Tests:** `powershell -File .\scripts\test_api.ps1`
+   - **Full End-to-End Tests:** `powershell -File .\scripts\verify_e2e.ps1`
