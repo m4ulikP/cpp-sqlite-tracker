@@ -1,4 +1,4 @@
-# 🎓 Student Expense & Task Tracker
+# Student Expense & Task Tracker
 
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=c%2B%2B&logoColor=white)](https://en.cppreference.com/w/cpp/20)
 [![SQLite3](https://img.shields.io/badge/SQLite-3.46+-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
@@ -11,22 +11,22 @@ A high-performance, full-stack application built with **Modern C++20**, **SQLite
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
-- [✨ Key Features](#-key-features)
-- [📸 Live Visual Preview](#-live-visual-preview)
-- [🏛️ System Architecture](#️-system-architecture)
-- [📁 Project Directory Structure](#-project-directory-structure)
-- [🛠️ Prerequisites & Setup](#️-prerequisites--setup)
-- [🚀 Running the Application & Demo Flow](#-running-the-application--demo-flow)
-- [📡 REST API Specification](#-rest-api-specification)
-- [🧪 Automated Test Suites](#-automated-test-suites)
-- [🛡️ Security & Hardening Notes](#️-security--hardening-notes)
-- [📜 License](#-license)
+- [Key Features](#key-features)
+- [Visual Preview](#visual-preview)
+- [System Architecture](#system-architecture)
+- [Project Structure](#project-structure)
+- [Prerequisites & Setup](#prerequisites--setup)
+- [Running the Application](#running-the-application)
+- [REST API Specification](#rest-api-specification)
+- [Automated Test Suites](#automated-test-suites)
+- [Security & Hardening](#security--hardening)
+- [License](#license)
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 - **Strict Three-Layer Separation:** Complete decoupling of HTTP routing, business logic validation, and raw SQL persistence.
 - **Modern C++20 Standard:** Leverages `<filesystem>`, structured bindings, `std::optional`, designated initializers, and RAII scoped resources.
@@ -38,7 +38,7 @@ A high-performance, full-stack application built with **Modern C++20**, **SQLite
 
 ---
 
-## 📸 Live Visual Preview
+## Visual Preview
 
 ### 1. Main Dashboard (Dark Mode & Summary Metrics)
 The responsive dashboard calculates aggregate metrics in real time via `GET /api/items/summary` and lists records with status chips, priority chips, and action buttons:
@@ -57,16 +57,16 @@ Fast client-side tab switching and backend-filtered queries (`type`, `status`, `
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 The application is structured into three clean, decoupled layers with strict one-directional data flow:
 
 ```mermaid
 flowchart LR
-    A["🖥️ Browser SPA<br/>(HTML5 / CSS3 / ES6)"] -->|"HTTP / JSON<br/>(:8080)"| B["⚡ Controller Layer<br/>(cpp-httplib + ItemController)"]
-    B -->|"DTO / Payload"| C["🧠 Service Layer<br/>(Domain Rules & Validation)"]
-    C -->|"Prepared Stmt"| D["🗄️ Repository Layer<br/>(RAII ScopedStatement)"]
-    D -->|"Native C API"| E[("💾 SQLite3 DB<br/>WAL Mode & Foreign Keys")]
+    A["Browser SPA<br/>(HTML5 / CSS3 / ES6)"] -->|"HTTP / JSON<br/>(:8080)"| B["Controller Layer<br/>(cpp-httplib + ItemController)"]
+    B -->|"DTO / Payload"| C["Service Layer<br/>(Domain Rules & Validation)"]
+    C -->|"Prepared Stmt"| D["Repository Layer<br/>(RAII ScopedStatement)"]
+    D -->|"Native C API"| E[("SQLite3 DB<br/>WAL Mode & Foreign Keys")]
 ```
 
 | Layer | Core Component | Role & Responsibilities |
@@ -78,7 +78,7 @@ flowchart LR
 
 ---
 
-## 📁 Project Directory Structure
+## Project Structure
 
 ```
 cpp-sqlite-tracker/
@@ -141,7 +141,7 @@ cpp-sqlite-tracker/
 
 ---
 
-## 🛠️ Prerequisites & Setup
+## Prerequisites & Setup
 
 ### Toolchain Requirements
 - **Compiler:** GCC 13+ (MSYS2 UCRT64 recommended on Windows), Clang 16+, or Visual Studio 2022 (with C++20 support).
@@ -178,7 +178,7 @@ cmake --build build --config Release
 
 ---
 
-## 🚀 Running the Application & Demo Flow
+## Running the Application
 
 ### 1. Start the Server
 ```powershell
@@ -200,22 +200,22 @@ Ready for requests. Press Ctrl+C to terminate.
 
 ### 2. Open the Web Application
 Open your browser to:
-👉 **[http://localhost:8080](http://localhost:8080)**
+**[http://localhost:8080](http://localhost:8080)**
 
-The single binary mounts `./frontend` directly, so you don't need any external node or python servers!
+The single binary mounts `./frontend` directly, so you don't need any external node or python servers.
 
 ### 3. Verification & Demo Walkthrough
-1. **Explore Seed Records:** Observe initial seeded college tasks ("Data Structures Exam", "C++ Project Proposal") and expenses ("Textbooks", "Student Housing Rent").
+1. **Explore Seed Records:** Observe initial seeded tasks ("Data Structures Exam", "C++ Project Proposal") and expenses ("Textbooks", "Student Housing Rent").
 2. **Add an Expense:** Click **+ New Item**, select **Expense**, enter "Graphing Calculator", category "Stationery", amount `65.00`. Save and observe immediate summary card updates ($274.50 total).
-3. **Add an Academic Task:** Click **+ New Item**, select **Task**, enter "Physics Lab Report #3", priority "High", due date "2026-12-05".
+3. **Add a Task:** Click **+ New Item**, select **Task**, enter "Physics Lab Report #3", priority "High", due date "2026-12-05".
 4. **Filter Records:** Toggle between "All", "Expenses Only", and "Tasks Only". Test live search typing "Exam".
 5. **Update Status:** Click "Mark Completed" or "Mark Paid" directly from the table row.
 6. **Persistence Demonstration:** Terminate `tracker_server.exe` (`Ctrl+C`), restart it, and refresh your browser. All records and modified statuses remain intact in `data/tracker.db`.
-7. **Clean Reset for Demo:** To reset back to default seeds, delete `data/tracker.db` and start the server again.
+7. **Clean Reset:** To reset back to default seeds, delete `data/tracker.db` and start the server again.
 
 ---
 
-## 📡 REST API Specification
+## REST API Specification
 
 All API endpoints exchange JSON and follow the standardized envelope:
 ```json
@@ -243,7 +243,7 @@ All API endpoints exchange JSON and follow the standardized envelope:
 
 ---
 
-## 🧪 Automated Test Suites
+## Automated Test Suites
 
 The repository includes three independent layers of automated verification:
 
@@ -270,7 +270,7 @@ powershell -File .\scripts\verify_e2e.ps1
 
 ---
 
-## 🛡️ Security & Hardening Notes
+## Security & Hardening
 
 - **Input Sanitization:** All text fields are trimmed and validated on the backend. HTML entities in user input are safely escaped before injection into DOM elements.
 - **Prepared Statements:** Strict parameter binding (`sqlite3_bind_*`) on all queries eliminates SQL injection vulnerabilities.
@@ -279,6 +279,6 @@ powershell -File .\scripts\verify_e2e.ps1
 
 ---
 
-## 📜 License
+## License
 
 This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
