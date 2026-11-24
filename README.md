@@ -7,7 +7,7 @@
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen)](https://github.com/m4ulikP/cpp-sqlite-tracker)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](#prerequisites--setup)
 
-A high-performance, full-stack college capstone project built with **Modern C++20**, **SQLite3 (WAL Mode)**, and a responsive **Obsidian Dark Web Dashboard**. Designed to help university students manage academic milestones (assignments, labs, exams) and personal finances (rent, tuition, books, daily expenses) in a single unified interface with real-time summary analytics.
+A high-performance, full-stack application built with **Modern C++20**, **SQLite3 (WAL Mode)**, and a responsive **Obsidian Dark Web Dashboard**. Designed to track academic milestones (assignments, labs, exams) and expenses (rent, tuition, books, daily spending) in a single unified interface with real-time summary analytics.
 
 ---
 
@@ -21,8 +21,8 @@ A high-performance, full-stack college capstone project built with **Modern C++2
 - [🚀 Running the Application & Demo Flow](#-running-the-application--demo-flow)
 - [📡 REST API Specification](#-rest-api-specification)
 - [🧪 Automated Test Suites](#-automated-test-suites)
-- [🎓 Technical Highlights for Viva / College Submission](#-technical-highlights-for-viva--college-submission)
 - [🛡️ Security & Hardening Notes](#️-security--hardening-notes)
+- [📜 License](#-license)
 
 ---
 
@@ -59,61 +59,22 @@ Fast client-side tab switching and backend-filtered queries (`type`, `status`, `
 
 ## 🏛️ System Architecture
 
-The application strictly adheres to the **Three-Layer Architecture** pattern, ensuring clean separation of concerns and high maintainability:
+The application is structured into three clean, decoupled layers with strict one-directional data flow:
 
 ```mermaid
-flowchart TD
-    subgraph Client["Presentation Layer (Browser)"]
-        UI["SPA Interface (HTML5 / Vanilla CSS3 / ES6)"]
-        API_JS["ApiClient (fetch / async-await)"]
-        UI -->|User Events| API_JS
-    end
-
-    subgraph Backend["C++20 Application Server (:8080)"]
-        direction TB
-        subgraph ControllerLayer["1. Controller Layer"]
-            HTTP_SRV["cpp-httplib Server"]
-            CTRL["ItemController"]
-            HTTP_SRV --> CTRL
-        end
-
-        subgraph ServiceLayer["2. Business Logic Layer"]
-            SRV["ItemService"]
-            VAL["Input Validation & Rules"]
-            SRV --- VAL
-        end
-
-        subgraph RepoLayer["3. Data Access Layer"]
-            REPO["ItemRepository"]
-            RAII_STMT["ScopedStatement (RAII stmt finalize)"]
-            REPO --- RAII_STMT
-        end
-
-        CTRL -->|DTO Request| SRV
-        SRV -->|ServiceResult<T>| CTRL
-        SRV -->|Domain Models| REPO
-        REPO -->|Item / Summary DTO| SRV
-    end
-
-    subgraph Storage["Persistent Storage"]
-        DB_MGR["DatabaseManager (RAII sqlite3_close)"]
-        SQLITE[("SQLite3 DB: data/tracker.db\n(WAL Mode + Foreign Keys)")]
-        REPO --> DB_MGR
-        DB_MGR --> SQLITE
-    end
-
-    API_JS -->|HTTP JSON REST| HTTP_SRV
-    CTRL -->|JSON Envelope| API_JS
+flowchart LR
+    A["🖥️ Browser SPA<br/>(HTML5 / CSS3 / ES6)"] -->|"HTTP / JSON<br/>(:8080)"| B["⚡ Controller Layer<br/>(cpp-httplib + ItemController)"]
+    B -->|"DTO / Payload"| C["🧠 Service Layer<br/>(Domain Rules & Validation)"]
+    C -->|"Prepared Stmt"| D["🗄️ Repository Layer<br/>(RAII ScopedStatement)"]
+    D -->|"Native C API"| E[("💾 SQLite3 DB<br/>WAL Mode & Foreign Keys")]
 ```
 
-### Layer Breakdown
-
-| Layer | Component | Responsibility |
+| Layer | Core Component | Role & Responsibilities |
 |---|---|---|
-| **Presentation / HTTP** | `ItemController` | Handles HTTP routing, decodes JSON payloads, validates route parameters, formats standardized response envelopes (`{ success, data, error }`), and sets CORS headers. |
-| **Business Logic** | `ItemService` | Validates domain constraints (e.g. non-empty title, non-negative expense amounts, valid enum values), computes aggregates, and returns strongly typed `ServiceResult<T>`. |
-| **Persistence / Repository** | `ItemRepository` | Executes parameterized prepared statements (`sqlite3_prepare_v2` / `sqlite3_bind_*`), performs schema migrations, and maps SQLite rows to C++ domain structs. |
-| **Database Management** | `DatabaseManager` | Owns the `sqlite3*` connection lifecycle via RAII, configures SQLite WAL journal mode and foreign keys, and executes `data/schema.sql`. |
+| **Presentation** | Web Dashboard & `ApiClient` | Responsive single-page UI; communicates via `fetch()` with standardized JSON payloads. |
+| **Controller** | `ItemController` (`cpp-httplib`) | Routes REST endpoints, enforces CORS, decodes requests, and wraps standardized JSON responses (`{ success, data, error }`). |
+| **Service** | `ItemService` | Validates domain business rules (field requirements, value bounds) and returns typed `ServiceResult<T>`. |
+| **Repository & DB** | `ItemRepository` & `DatabaseManager` | Manages SQLite connection via RAII, runs parameterized prepared statements (`sqlite3_bind_*`), and executes schema migrations. |
 
 ---
 
@@ -243,7 +204,7 @@ Open your browser to:
 
 The single binary mounts `./frontend` directly, so you don't need any external node or python servers!
 
-### 3. Demo Flow for College Viva / Evaluation
+### 3. Verification & Demo Walkthrough
 1. **Explore Seed Records:** Observe initial seeded college tasks ("Data Structures Exam", "C++ Project Proposal") and expenses ("Textbooks", "Student Housing Rent").
 2. **Add an Expense:** Click **+ New Item**, select **Expense**, enter "Graphing Calculator", category "Stationery", amount `65.00`. Save and observe immediate summary card updates ($274.50 total).
 3. **Add an Academic Task:** Click **+ New Item**, select **Task**, enter "Physics Lab Report #3", priority "High", due date "2026-12-05".
@@ -309,31 +270,10 @@ powershell -File .\scripts\verify_e2e.ps1
 
 ---
 
-## 🎓 Technical Highlights for Viva / College Submission
-
-When presenting this project to evaluators or professors, highlight these architectural decisions:
-
-### 1. Strict RAII (Resource Acquisition Is Initialization)
-- **`DatabaseManager`:** Guarantees `sqlite3_close_v2()` execution upon object destruction. Copy construction and copy assignment are explicitly deleted (`= delete;`) to avoid dangling pointer copies, while move operations transfer ownership cleanly.
-- **`ScopedStatement`:** An internal RAII struct encapsulating `sqlite3_stmt*`. It guarantees that `sqlite3_finalize()` is always executed even if exceptions or early return paths are taken, completely preventing database handle leaks.
-
-### 2. SQL Injection Immunization
-- Rather than concatenating SQL strings (e.g. `WHERE title = '` + title + `'`), the repository utilizes strict positional parameter bindings (`?1`, `?2`, etc.) via `sqlite3_bind_text()`, `sqlite3_bind_double()`, and `sqlite3_bind_int()`.
-
-### 3. Separation of Concerns & Result Pattern
-- `ItemController` never issues SQL queries directly. It delegates to `ItemService`, which enforces business rules and returns a structured `ServiceResult<T>` containing `success`, `data`, and typed error codes (`INVALID_INPUT`, `NOT_FOUND`, `DB_ERROR`). The controller then maps domain errors to proper HTTP response codes (`400 Bad Request`, `404 Not Found`, `500 Internal Error`).
-
-### 4. High-Performance Concurrency (SQLite WAL)
-- Enabled via `PRAGMA journal_mode = WAL;`. Write-Ahead Logging allows readers to read from the database concurrently while a write transaction is occurring, drastically reducing lock contention.
-
-### 5. Cohesive Obsidian Dark Design System
-- Built with vanilla CSS variables (`--bg-app: #0b0f19`, `--bg-card: #111827`, `--primary: #3b82f6`). Zero bulky dependencies (no Bootstrap or Tailwind CDN). Uses hardware-accelerated CSS transforms and smooth spring easings (`cubic-bezier(0.22, 1, 0.36, 1)`) with native reduced-motion support.
-
----
-
 ## 🛡️ Security & Hardening Notes
 
 - **Input Sanitization:** All text fields are trimmed and validated on the backend. HTML entities in user input are safely escaped before injection into DOM elements.
+- **Prepared Statements:** Strict parameter binding (`sqlite3_bind_*`) on all queries eliminates SQL injection vulnerabilities.
 - **Shutdown Route Protection:** `/api/admin/shutdown` is provided for automated testing and CI runners. In production deployments, this endpoint can be restricted to `127.0.0.1` or protected via an authorization token header.
 - **CORS Safety:** Configured with preflight `OPTIONS` handling and specific allowed headers (`Content-Type, Accept, Authorization`) to support split-hosting environments.
 
@@ -341,4 +281,4 @@ When presenting this project to evaluators or professors, highlight these archit
 
 ## 📜 License
 
-This project is licensed under the [MIT License](LICENSE). Built for educational and academic submission purposes.
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
