@@ -116,9 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
     el.toastContainer.appendChild(toast);
     setTimeout(() => {
       toast.style.opacity = '0';
-      toast.style.transform = 'translateY(8px)';
-      toast.style.transition = 'all 0.25s ease';
-      setTimeout(() => toast.remove(), 250);
+      toast.style.transform = 'translateY(12px) scale(0.96)';
+      toast.style.transition = 'opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1), transform 0.22s cubic-bezier(0.22, 1, 0.36, 1)';
+      setTimeout(() => toast.remove(), 220);
     }, 3200);
   }
 
